@@ -3,7 +3,7 @@
 import json
 from json import JSONDecodeError
 
-# import requests
+import requests
 # from requests.adapters import HTTPAdapter
 # from requests.exceptions import RetryError
 from urllib3.exceptions import MaxRetryError
@@ -90,8 +90,7 @@ def request(method, url, payload=None, retries=5, backoff_factor=0.3,
             status_forcelist=(500, 502, 503, 504),
             method_whitelist=frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST']),
             is_json=True):
-    if payload is None:
-        payload = {}
+    payload = payload or {}
 
     retry = Retry(
         total=retries,
@@ -117,3 +116,13 @@ def request(method, url, payload=None, retries=5, backoff_factor=0.3,
         return ret
 
     return response
+
+
+def validate_download_url(url):
+    response = requests.head(url, allow_redirects=True)
+    content_type = response.headers.get('content-type', 0)
+    if 'text' in content_type.lower():
+        return False
+    if 'html' in content_type.lower():
+        return False
+    return True

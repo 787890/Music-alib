@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import Logger
-from engine.SearchEngineQq import SongSearchEngineQq
-from engine.SearchEngineKugou import SongSearchEngineKugou
+from engine.SearchEngineQq import SearchEngineQq
+from engine.SearchEngineKugou import SearchEngineKugou
 from Enums import Source
 
 log = Logger.get_logger()
 
 
-class SongSearchEngineFactory:
+class SearchEngineFactory:
 
     @staticmethod
     def get_search_engine(source):
         if source == Source.QQ:
-            return SongSearchEngineQq
+            return SearchEngineQq
         elif source == Source.KUGOU:
-            return SongSearchEngineKugou
+            return SearchEngineKugou
         else:
             # TODO: add log
             log.error("Invalid search engine. available search engines: %s" %

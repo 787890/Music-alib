@@ -51,5 +51,3 @@ if __name__ == "__main__":
     a1 = 'wowaka 初音ミク'
     n2 = '裏表ラバーズ'
     a2 = '初音ミク、wowaka'
-
-    print(BaseSongSearchEngine._get_similarity_ratio(n1, a1, n2, a2))
