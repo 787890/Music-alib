@@ -1,6 +1,6 @@
-# Project Title
+# Music Library
 
-Music Library
+A Simple Music Library~
 
 ## Getting Started
 
@@ -65,22 +65,6 @@ Service is running on http://127.0.0.1:5000/ by default.
 
 For more information: http://flask.pocoo.org/docs/1.0/quickstart/#
 
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
 
 ## Deployment
 
