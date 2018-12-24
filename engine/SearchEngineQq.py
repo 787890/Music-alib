@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import math
+
 from Filter import SongFilter
 from Logger import json_format
 from engine.SearchEngineBase import SearchEngineBase
@@ -64,18 +66,19 @@ class SearchEngineQq(SearchEngineBase):
         # format and validate download link
         self.__format_download_links(vkey, file_names)
 
+        self.log.debug(json_format(self.search_result))
+
         if not self.search_result['files']:
             self.log.info(
                 "Failed in finding download info from search source: QQ, "
                 "search query: %s (bitrate >= %s, similarity ratio >= %s)" %
                 (self.query_string, min_bitrate, min_similarity))
+            return
 
         self.log.info(
             "Succeeded in finding download info from search source: QQ, "
             "search query: %s (bitrate >= %s, similarity ratio >= %s)" %
             (self.query_string, min_bitrate, min_similarity))
-
-        self.log.debug(json_format(self.search_result))
 
     def __search_song_info_by_query(self):
         self.log.debug("[QQ] [song_info] start searching for song info")
@@ -125,7 +128,7 @@ class SearchEngineQq(SearchEngineBase):
 
             for file_type in self.FILE_TYPES:
                 size = file_info[self.FILE_SIZE_KEY_MAPPING[file_type]]
-                bitrate = round(size / 1000 / interval * 8) if interval != 0 else 0
+                bitrate = math.floor(size / 1000 / interval * 8) if interval != 0 else 0
                 ext = self.FILE_EXTS_MAPPING[file_type]
                 file = {
                     'type': file_type,
@@ -143,16 +146,16 @@ class SearchEngineQq(SearchEngineBase):
 
         self.log.debug("[QQ] [song_info] Succeeded in finding song info")
 
-        similarity_ratio = self._get_similarity_ratio()
-        min_similarity = self.song_filter.min_similarity if self.song_filter else 0
-
         if isinstance(self.query, dict):
-            self.search_result['similarity_ratio'] = self._get_similarity_ratio()
+            similarity_ratio = self._get_similarity_ratio()
+            min_similarity = self.song_filter.min_similarity if self.song_filter else 0
 
-        if similarity_ratio < min_similarity:
-            self.log.debug(
-                "[QQ] [song_info] Discard all result, not meeting minimun similarity ratio: %s" % min_similarity)
-            return None
+            self.search_result['similarity_ratio'] = similarity_ratio
+
+            if similarity_ratio < min_similarity:
+                self.log.debug(
+                    "[QQ] [song_info] Discard all result, not meeting minimun similarity ratio: %s" % min_similarity)
+                return None
 
         return mid
 

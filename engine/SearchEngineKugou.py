@@ -85,17 +85,17 @@ class SearchEngineKugou(SearchEngineBase):
             self.search_result['track_name'] = song_info['SongName']
             self.search_result['artists'] = song_info['SingerName']
 
-            similarity_ratio = self._get_similarity_ratio()
-            min_similarity = self.song_filter.min_similarity if self.song_filter else 0
-
             if isinstance(self.query, dict):
+                similarity_ratio = self._get_similarity_ratio()
+                min_similarity = self.song_filter.min_similarity if self.song_filter else 0
+
                 self.search_result['similarity_ratio'] = similarity_ratio
 
-            if similarity_ratio < min_similarity:
-                self.log.debug(
-                    "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
-                    % min_similarity)
-                return
+                if similarity_ratio < min_similarity:
+                    self.log.debug(
+                        "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
+                        % min_similarity)
+                    return
 
             # file info
             for file_type in self.FILE_TYPES:
