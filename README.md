@@ -18,7 +18,9 @@ aiohttp (TODO)
 ### Installing
 
 1. Python 3
+
 https://www.python.org/downloads/
+
 
 2. Install dependencies
 
@@ -39,9 +41,25 @@ pip install aiohttp
 
 End with an example of getting some data out of the system or using it for a little demo
 
-## Running the tests
+## A quickstart
 
-Explain how to run the automated tests for this system
+
+for Windows
+
+```
+$ set FLASK_APP=hello.py
+$ flask run
+```
+
+for Linux
+
+```
+$ export FLASK_APP=hello.py
+$ flask run
+```
+
+Service is running on http://127.0.0.1:5000/ by default. 
+For more information: http://flask.pocoo.org/docs/1.0/quickstart/#
 
 ### Break down into end to end tests
 
