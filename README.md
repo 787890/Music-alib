@@ -58,8 +58,10 @@ $ export FLASK_APP=hello.py
 $ flask run
 ```
 
-Service is running on http://127.0.0.1:5000/ by default. 
+Service is running on http://127.0.0.1:5000/ by default.
+
 For more information: http://flask.pocoo.org/docs/1.0/quickstart/#
+
 
 ### Break down into end to end tests
 
