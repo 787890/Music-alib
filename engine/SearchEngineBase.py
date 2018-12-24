@@ -22,9 +22,9 @@ class SearchEngineBase:
         }
 
     def set_query(self, query):
-        self.search_result['query'] = query
-        self.search_result['query_string'] = \
-            "%s %s" % (query['song_name'], query['artists']) if isinstance(query, dict) else query
+        self.search_result['query'] = str.strip(query)
+        self.search_result['query_string'] = "%s %s" % (
+            query['song_name'], query['artists']) if isinstance(query, dict) else str.strip(query)
 
     # TODO: need to find a more percise algorithm
     def _get_similarity_ratio(self):
