@@ -2,7 +2,7 @@
 
 from difflib import SequenceMatcher
 
-import Logger
+from src import Logger
 
 
 class SearchEngineBase:

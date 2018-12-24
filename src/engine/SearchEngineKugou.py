@@ -2,11 +2,11 @@
 
 from hashlib import md5
 
-from engine.SearchEngineBase import SearchEngineBase
-import HttpRequest
-from Logger import json_format
-from Enums import Source
-from Filter import SongFilter
+from src.engine.SearchEngineBase import SearchEngineBase
+from src import HttpRequest
+from src.Logger import json_format
+from src.Enums import Source
+from src.Filter import SongFilter
 
 
 class SearchEngineKugou(SearchEngineBase):
@@ -159,7 +159,7 @@ class SearchEngineKugou(SearchEngineBase):
 
         try:
             if not (("status" in response_data) and (response_data["status"] == 1 and response_data["url"])):
-                self.log.debug("[KUGOU] [link] Failed in getting download link for type: " % file_type)
+                self.log.debug("[KUGOU] [link] Failed in getting download link for type: %s" % file_type)
                 return None, None
 
             url = response_data['url']

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import math
 
-from Filter import SongFilter
-from Logger import json_format
-from engine.SearchEngineBase import SearchEngineBase
-import HttpRequest
-from Enums import Source
+from src.Filter import SongFilter
+from src.Logger import json_format
+from src.engine.SearchEngineBase import SearchEngineBase
+from src import HttpRequest
+from src.Enums import Source
 
 
 class SearchEngineQq(SearchEngineBase):
@@ -223,10 +223,11 @@ class SearchEngineQq(SearchEngineBase):
         return vkey, file_names
 
     def __format_download_links(self, vkey, file_names):
-        if not vkey or not file_names:
-            return
 
         def __is_valid_download_link__(file):
+            if not vkey or not file_names:
+                return False
+
             file_type = file['type']
             if file['size'] == 0:
                 self.log.debug("[QQ] [link] Discard type: %s, due to invalid file size: %s" % (file_type, file['size']))

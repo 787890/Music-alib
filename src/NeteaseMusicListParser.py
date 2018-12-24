@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import Logger
-import HttpRequest
+from src import HttpRequest, Logger
 
 log = Logger.get_logger()
 
