@@ -10,7 +10,7 @@ from urllib3.exceptions import MaxRetryError
 from urllib3.util.retry import Retry
 import urllib3
 
-import Logger
+from src import Logger
 
 log = Logger.get_logger()
 

@@ -2,11 +2,11 @@
 
 from hashlib import md5
 
-from engine.SearchEngineBase import SearchEngineBase
-import HttpRequest
-from Logger import json_format
-from Enums import Source
-from Filter import SongFilter
+from src.engine.SearchEngineBase import SearchEngineBase
+from src import HttpRequest
+from src.Logger import json_format
+from src.Enums import Source
+from src.Filter import SongFilter
 
 
 class SearchEngineKugou(SearchEngineBase):
@@ -66,6 +66,9 @@ class SearchEngineKugou(SearchEngineBase):
         self.log.debug(json_format(self.search_result))
 
     def __search_song_info_by_query(self):
+        if self.query_string == '':
+            return
+
         self.log.debug("[KUGOU] [song_info] start searching for song info")
         payload = {'keyword': self.query_string}
         response_data = HttpRequest.request('GET', self.KUGOU_MUSIC_SEARCH_API, payload)
@@ -79,23 +82,25 @@ class SearchEngineKugou(SearchEngineBase):
         try:
             song_info = response_data["data"]["lists"][0]
 
+            self.log.debug(json_format(song_info))
+
             self.log.debug("[KUGOU] [song_info] Successfully found song info")
 
             # song info
             self.search_result['track_name'] = song_info['SongName']
             self.search_result['artists'] = song_info['SingerName']
 
-            similarity_ratio = self._get_similarity_ratio()
-            min_similarity = self.song_filter.min_similarity if self.song_filter else 0
-
             if isinstance(self.query, dict):
+                similarity_ratio = self._get_similarity_ratio()
+                min_similarity = self.song_filter.min_similarity if self.song_filter else 0
+
                 self.search_result['similarity_ratio'] = similarity_ratio
 
-            if similarity_ratio < min_similarity:
-                self.log.debug(
-                    "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
-                    % min_similarity)
-                return
+                if similarity_ratio < min_similarity:
+                    self.log.debug(
+                        "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
+                        % min_similarity)
+                    return
 
             # file info
             for file_type in self.FILE_TYPES:
@@ -159,7 +164,7 @@ class SearchEngineKugou(SearchEngineBase):
 
         try:
             if not (("status" in response_data) and (response_data["status"] == 1 and response_data["url"])):
-                self.log.debug("[KUGOU] [link] Failed in getting download link for type: " % file_type)
+                self.log.debug("[KUGOU] [link] Failed in getting download link for type: %s" % file_type)
                 return None, None
 
             url = response_data['url']

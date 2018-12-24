@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+</head>
+<body>
+    {% for result in results %}
+    <p></p>
+    <table>
+        <thead>{{result.source}}</thead>
+        <tbody>
+        {% if result.files %}
+        <caption>{{result.track_name}} - {{result.artists}}</caption>
+        {% for file in result.files %}
+        <tr>
+            <td>{{file.ext}}</td>
+            <td>{{file.bitrate_string}}</td>
+            <td><a href="{{file.url}}"><img src="{{url_for('static', filename='icon/icon_download.png')}}"></a></td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <p>Winner Winner Chicken Dinner!</p>
+        {% endif %}
+        </tbody>
+    </table>
+    {% endfor %}
+
+</body>
+</html>
+
+<style type="text/css">
+table {
+    border-collapse: collapse;
+    font-family: futura, arial, sans-serif;
+}
+
+caption {
+    font-size: larger;
+    margin: 1em auto;
+}
+
+th,td {
+    padding: .65em;
+}
+
+th,td {
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    text-align: center;
+}
+</style>

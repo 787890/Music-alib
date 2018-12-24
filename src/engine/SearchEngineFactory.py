@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import Logger
-from engine.SearchEngineQq import SearchEngineQq
-from engine.SearchEngineKugou import SearchEngineKugou
-from Enums import Source
+from src import Logger
+from src.engine.SearchEngineQq import SearchEngineQq
+from src.engine.SearchEngineKugou import SearchEngineKugou
+from src.Enums import Source
 
 log = Logger.get_logger()
 
