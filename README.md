@@ -10,7 +10,6 @@ These instructions will get you a copy of the project up and running on your loc
 
 Python 3.5.3+
 
-
 flask
 
 urllib3
@@ -28,7 +27,7 @@ https://www.python.org/downloads/
 
 2. Install dependencies
 
-simplely run setup.py
+simply run setup.py
 
 ```
 python setup.py install
