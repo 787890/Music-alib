@@ -66,6 +66,9 @@ class SearchEngineKugou(SearchEngineBase):
         self.log.debug(json_format(self.search_result))
 
     def __search_song_info_by_query(self):
+        if self.query_string == '':
+            return
+
         self.log.debug("[KUGOU] [song_info] start searching for song info")
         payload = {'keyword': self.query_string}
         response_data = HttpRequest.request('GET', self.KUGOU_MUSIC_SEARCH_API, payload)

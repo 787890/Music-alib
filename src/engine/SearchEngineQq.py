@@ -81,6 +81,9 @@ class SearchEngineQq(SearchEngineBase):
             (self.query_string, min_bitrate, min_similarity))
 
     def __search_song_info_by_query(self):
+        if self.query_string == '':
+            return
+
         self.log.debug("[QQ] [song_info] start searching for song info")
 
         payload = {

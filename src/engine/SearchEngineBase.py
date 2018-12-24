@@ -8,8 +8,9 @@ from src import Logger
 class SearchEngineBase:
 
     def __init__(self, query, song_filter=None):
-        self.query = query
-        self.query_string = "%s %s" % (query['track_name'], query['artists']) if isinstance(query, dict) else query
+        self.query = str.strip(query)
+        self.query_string = "%s %s" % (
+            query['track_name'], query['artists']) if isinstance(query, dict) else str.strip(query)
         self.song_filter = song_filter
         self.log = Logger.get_logger()
         self.search_result = {
