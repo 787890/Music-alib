@@ -79,6 +79,8 @@ class SearchEngineKugou(SearchEngineBase):
         try:
             song_info = response_data["data"]["lists"][0]
 
+            self.log.debug(json_format(song_info))
+
             self.log.debug("[KUGOU] [song_info] Successfully found song info")
 
             # song info

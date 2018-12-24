@@ -55,5 +55,5 @@ setup(
     license='',
     author='Chenyi Lv',
     author_email='',
-    description=''
+    description='', install_requires=['flask', 'requests', 'urllib3']
 )

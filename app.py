@@ -17,12 +17,17 @@ def index():
 def query():
     q = request.form.get('query')
     min_bitrate = int(request.form.get('min_bitrate'))
-    return render_template("query_result.html", results=__query_serach(q, min_bitrate))
+    return render_template(
+        "query_result.html",
+        title="Search by query",
+        results=__query_serach(q, min_bitrate))
 
 
 @app.route('/netease', methods=['POST'])
 def netease():
-    return render_template("netease_result.html", title="Search by NetEase")
+    return render_template(
+        "netease_result.html",
+        title="Search by NetEase")
 
 
 def __query_serach(q, min_bitrate):

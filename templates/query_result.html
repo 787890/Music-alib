@@ -6,17 +6,22 @@
 </head>
 <body>
     {% for result in results %}
+    <p></p>
     <table>
         <thead>{{result.source}}</thead>
-        <caption>{{result.track_name}}-{{result.artists}}</caption>
         <tbody>
+        {% if result.files %}
+        <caption>{{result.track_name}} - {{result.artists}}</caption>
         {% for file in result.files %}
         <tr>
             <td>{{file.ext}}</td>
             <td>{{file.bitrate_string}}</td>
-            <td><a href="{{file.url}}">download</a></td>
+            <td><a href="{{file.url}}"><img src="{{url_for('static', filename='icon/icon_download.png')}}"></a></td>
         </tr>
         {% endfor %}
+        {% else %}
+        <p>Winner Winner Chicken Dinner!
+        {% endif %}
         </tbody>
     </table>
     {% endfor %}
