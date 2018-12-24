@@ -47,14 +47,14 @@ End with an example of getting some data out of the system or using it for a lit
 for Windows
 
 ```
-$ set FLASK_APP=hello.py
+$ set FLASK_APP=run.py
 $ flask run
 ```
 
 for Linux
 
 ```
-$ export FLASK_APP=hello.py
+$ export FLASK_APP=run.py
 $ flask run
 ```
 
