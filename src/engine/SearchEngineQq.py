@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import asyncio
+import json
 import math
 
 from src.Filter import SongFilter
@@ -61,7 +63,8 @@ class SearchEngineQq(SearchEngineBase):
         mid = self.__search_song_info_by_query()
 
         # get vkey by mid, filename, guid
-        vkey, file_names = self.__get_vkey(mid)
+        loop = asyncio.get_event_loop()
+        vkey, file_names = loop.run_until_complete(self.__get_vkey(mid))
 
         # format and validate download link
         self.__format_download_links(vkey, file_names)
@@ -162,7 +165,7 @@ class SearchEngineQq(SearchEngineBase):
 
         return mid
 
-    def __get_vkey(self, mid):
+    async def __get_vkey(self, mid):
         if not mid:
             return None, None
 
@@ -175,17 +178,7 @@ class SearchEngineQq(SearchEngineBase):
             ext = self.FILE_EXTS_MAPPING[t]
             file_names[t] = "%s%s.%s" % (prefix, mid, ext)
 
-        # TODO:Async this
-        for f in self.search_result['files']:
-            file_type = f['type']
-
-            file_size = f['size']
-            if file_size == 0:
-                self.log.debug("[QQ] [vkey] skip type %s, due to invalid file size: %s" % (file_type, file_size))
-                continue
-
-            self.log.debug("[QQ] [vkey] try type %s" % file_type)
-            payload = {
+        tasks = [HttpRequest.async_request('GET', self.QQ_VKEY_API, {
                 "format": "json",
                 "inCharset": "utf8",
                 "outCharset": "utf-8",
@@ -196,11 +189,15 @@ class SearchEngineQq(SearchEngineBase):
                 "callback": "",
                 "uin": "0",
                 "songmid": mid,
-                "filename": file_names[file_type],
+                "filename": file_names[f['type']],
                 "guid": self.GUID
-            }
+            }, file_type=f['type']) for f in self.search_result['files']]
 
-            response_data = HttpRequest.request('GET', self.QQ_VKEY_API, payload=payload, is_json=True)
+        responses = await asyncio.gather(*tasks)
+
+        for response in responses:
+            response_data = json.loads(response[0])
+            file_type = response[1]['file_type']
 
             if not response_data['code'] == 0:
                 self.log.debug("[QQ] [vkey] failed type %s, due to api return error" % file_type)

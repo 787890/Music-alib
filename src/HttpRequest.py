@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import aiohttp
 import json
 from json import JSONDecodeError
 
@@ -126,3 +127,19 @@ def validate_download_url(url):
     if 'html' in content_type.lower():
         return False
     return True
+
+
+async def async_request(method, url, payload=None, **kwargs):
+    payload = payload or {}
+
+    if method == 'GET':
+        params = ["%s=%s" % (k, v) for k, v in payload.items()]
+        url = "%s?%s" % (url, "&".join(params))
+        payload = {}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.request(method, url, json=payload) as response:
+            if kwargs == {}:
+                return await response.text(encoding='utf-8')
+            else:
+                return await response.text(encoding='utf-8'), kwargs

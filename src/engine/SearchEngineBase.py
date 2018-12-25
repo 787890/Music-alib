@@ -8,7 +8,7 @@ from src import Logger
 class SearchEngineBase:
 
     def __init__(self, query, song_filter=None):
-        self.query = str.strip(query)
+        self.query = query
         self.query_string = "%s %s" % (
             query['track_name'], query['artists']) if isinstance(query, dict) else str.strip(query)
         self.song_filter = song_filter
@@ -23,9 +23,9 @@ class SearchEngineBase:
         }
 
     def set_query(self, query):
-        self.search_result['query'] = query
-        self.search_result['query_string'] = \
-            "%s %s" % (query['song_name'], query['artists']) if isinstance(query, dict) else query
+        self.query = query
+        self.query_string = "%s %s" % (
+            query['track_name'], query['artists']) if isinstance(query, dict) else str.strip(query)
 
     # TODO: need to find a more percise algorithm
     def _get_similarity_ratio(self):
