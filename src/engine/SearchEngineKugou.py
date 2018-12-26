@@ -200,7 +200,7 @@ class SearchEngineKugou(SearchEngineBase):
 
 
 if __name__ == '__main__':
-    query = {"track_name": "Hello", "artists": ""}
+    query = {"track_name": "Hello", "artists": "Adele"}
     fltr = SongFilter(min_similarity=0, min_bitrate=0)
     s = SearchEngineKugou(query, fltr)
     s.search()
