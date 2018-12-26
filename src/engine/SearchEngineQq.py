@@ -52,7 +52,7 @@ class SearchEngineQq(SearchEngineBase):
     def get_search_result(self):
         return self.search_result
 
-    def search(self):
+    async def search(self):
         min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
         min_similarity = self.song_filter.min_similarity if self.song_filter else 0
         self.log.info(
@@ -63,11 +63,10 @@ class SearchEngineQq(SearchEngineBase):
         mid = self.__search_song_info_by_query()
 
         # get vkey by mid, filename, guid
-        loop = asyncio.get_event_loop()
-        vkey, file_names = loop.run_until_complete(self.__get_vkey(mid))
+        await self.__get_vkey(mid)
 
-        # format and validate download link
-        self.__format_download_links(vkey, file_names)
+        # format and validate download link by vkey, file_name
+        self.__format_download_links()
 
         self.log.debug(json_format(self.search_result))
 
@@ -203,6 +202,8 @@ class SearchEngineQq(SearchEngineBase):
             response_data = json.loads(response[0])
             file_type = response[1]['file_type']
 
+            self.log.debug("checking type %s" % file_type)
+
             if not response_data['code'] == 0:
                 self.log.debug("[QQ] [vkey] failed type %s, due to api return error" % file_type)
                 continue
@@ -224,12 +225,13 @@ class SearchEngineQq(SearchEngineBase):
             self.log.debug("[QQ] [vkey] Failed in getting vkey by all types")
             return None, None
 
-        return vkey, file_names
+        self.vkey = vkey
+        self.file_names = file_names
 
-    def __format_download_links(self, vkey, file_names):
+    def __format_download_links(self):
 
         def __is_valid_download_link__(file):
-            if not vkey or not file_names:
+            if not self.vkey or not self.file_names:
                 return False
 
             file_type = file['type']
@@ -244,9 +246,9 @@ class SearchEngineQq(SearchEngineBase):
                     "[QQ] [link] Discard type: %s, not meeting minimal bitrate: %s" % (file_type, min_bitrate))
                 return False
 
-            file_name = file_names[file_type]
+            file_name = self.file_names[file_type]
             url = "http://dl.stream.qqmusic.qq.com/%s?guid=%s&vkey=%s&uin=0&fromtag=53" % (
-                file_name, self.GUID, vkey)
+                file_name, self.GUID, self.vkey)
 
             # TODO: qq api returns 403 with all HEAD method, need to find another method to validate
             # if not HttpRequest.validate_download_url(url):

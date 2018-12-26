@@ -55,5 +55,5 @@ setup(
     license='',
     author='Chenyi Lv',
     author_email='',
-    description='', install_requires=['flask', 'requests', 'urllib3', 'aiohttp']
+    description='', install_requires=['requests', 'urllib3', 'aiohttp', 'aiohttp_jinja2', 'jinja2']
 )

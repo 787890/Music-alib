@@ -42,7 +42,7 @@ class SearchEngineKugou(SearchEngineBase):
     def get_search_result(self):
         return self.search_result
 
-    def search(self):
+    async def search(self):
         min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
         min_similarity = self.song_filter.min_similarity if self.song_filter else 0
         self.log.info(
@@ -53,8 +53,7 @@ class SearchEngineKugou(SearchEngineBase):
         file_hashes, file_bitrates = self.__search_song_info_by_query()
 
         # get download link by hash and key
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.__get_download_links(file_hashes, file_bitrates))
+        await self.__get_download_links(file_hashes, file_bitrates)
 
         self.log.debug(json_format(self.search_result))
 
