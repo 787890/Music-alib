@@ -129,16 +129,12 @@ def validate_download_url(url):
     return True
 
 
-async def async_request(method, url, payload=None, **kwargs):
-    payload = payload or {}
-
-    if method == 'GET':
-        params = ["%s=%s" % (k, v) for k, v in payload.items()]
-        url = "%s?%s" % (url, "&".join(params))
-        payload = {}
+async def async_request(method, url, payload=None, headers=None, **kwargs):
+    req_json = payload if method == 'POST' else None
+    url = "%s?%s" % (url, "&".join(["%s=%s" % (k, v) for k, v in payload.items()])) if method == 'GET' else url
 
     async with aiohttp.ClientSession() as session:
-        async with session.request(method, url, json=payload) as response:
+        async with session.request(method, url, json=req_json, headers=headers) as response:
             if kwargs == {}:
                 return await response.text(encoding='utf-8')
             else:

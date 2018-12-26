@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+
 import asyncio
 import json
-import math
 
 from src.Filter import SongFilter
 from src.Logger import json_format
@@ -134,7 +134,7 @@ class SearchEngineQq(SearchEngineBase):
 
             for file_type in self.FILE_TYPES:
                 size = file_info[self.FILE_SIZE_KEY_MAPPING[file_type]]
-                bitrate = math.floor(size / 1000 / interval * 8) if interval != 0 else 0
+                bitrate = round(size/1000/interval*8) if interval != 0 else 0
                 ext = self.FILE_EXTS_MAPPING[file_type]
                 file = {
                     'type': file_type,
@@ -142,7 +142,7 @@ class SearchEngineQq(SearchEngineBase):
                     'size_string': self._readable_filesize(size),
                     'ext': ext,
                     'bitrate': bitrate,
-                    'bitrate_string': "%s Kbps" % bitrate
+                    'bitrate_string': "%d Kbps" % bitrate
                 }
                 self.search_result['files'].append(file)
 
@@ -178,7 +178,9 @@ class SearchEngineQq(SearchEngineBase):
             ext = self.FILE_EXTS_MAPPING[t]
             file_names[t] = "%s%s.%s" % (prefix, mid, ext)
 
-        tasks = [HttpRequest.async_request('GET', self.QQ_VKEY_API, {
+        tasks = [HttpRequest.async_request(
+            'GET',
+            self.QQ_VKEY_API, {
                 "format": "json",
                 "inCharset": "utf8",
                 "outCharset": "utf-8",
@@ -191,7 +193,9 @@ class SearchEngineQq(SearchEngineBase):
                 "songmid": mid,
                 "filename": file_names[f['type']],
                 "guid": self.GUID
-            }, file_type=f['type']) for f in self.search_result['files']]
+            },
+            file_type=f['type']
+        ) for f in self.search_result['files']]
 
         responses = await asyncio.gather(*tasks)
 
