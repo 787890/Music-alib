@@ -48,6 +48,8 @@ class SearchEngineQq(SearchEngineBase):
     def __init__(self, query, song_filter=None):
         super().__init__(query, song_filter)
         self.search_result['source'] = self.SOURCE_NAME
+        self.vkey = None
+        self.file_names = None
 
     def get_search_result(self):
         return self.search_result
