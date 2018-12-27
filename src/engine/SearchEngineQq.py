@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import math
+
+import asyncio
+import json
 
 from src.Filter import SongFilter
 from src.Logger import json_format
@@ -46,11 +48,13 @@ class SearchEngineQq(SearchEngineBase):
     def __init__(self, query, song_filter=None):
         super().__init__(query, song_filter)
         self.search_result['source'] = self.SOURCE_NAME
+        self.vkey = None
+        self.file_names = None
 
     def get_search_result(self):
         return self.search_result
 
-    def search(self):
+    async def search(self):
         min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
         min_similarity = self.song_filter.min_similarity if self.song_filter else 0
         self.log.info(
@@ -61,10 +65,10 @@ class SearchEngineQq(SearchEngineBase):
         mid = self.__search_song_info_by_query()
 
         # get vkey by mid, filename, guid
-        vkey, file_names = self.__get_vkey(mid)
+        await self.__get_vkey(mid)
 
-        # format and validate download link
-        self.__format_download_links(vkey, file_names)
+        # format and validate download link by vkey, file_name
+        self.__format_download_links()
 
         self.log.debug(json_format(self.search_result))
 
@@ -131,7 +135,7 @@ class SearchEngineQq(SearchEngineBase):
 
             for file_type in self.FILE_TYPES:
                 size = file_info[self.FILE_SIZE_KEY_MAPPING[file_type]]
-                bitrate = math.floor(size / 1000 / interval * 8) if interval != 0 else 0
+                bitrate = round(size/1000/interval*8) if interval != 0 else 0
                 ext = self.FILE_EXTS_MAPPING[file_type]
                 file = {
                     'type': file_type,
@@ -139,7 +143,7 @@ class SearchEngineQq(SearchEngineBase):
                     'size_string': self._readable_filesize(size),
                     'ext': ext,
                     'bitrate': bitrate,
-                    'bitrate_string': "%s Kbps" % bitrate
+                    'bitrate_string': "%d Kbps" % bitrate
                 }
                 self.search_result['files'].append(file)
 
@@ -162,7 +166,7 @@ class SearchEngineQq(SearchEngineBase):
 
         return mid
 
-    def __get_vkey(self, mid):
+    async def __get_vkey(self, mid):
         if not mid:
             return None, None
 
@@ -175,17 +179,9 @@ class SearchEngineQq(SearchEngineBase):
             ext = self.FILE_EXTS_MAPPING[t]
             file_names[t] = "%s%s.%s" % (prefix, mid, ext)
 
-        # TODO:Async this
-        for f in self.search_result['files']:
-            file_type = f['type']
-
-            file_size = f['size']
-            if file_size == 0:
-                self.log.debug("[QQ] [vkey] skip type %s, due to invalid file size: %s" % (file_type, file_size))
-                continue
-
-            self.log.debug("[QQ] [vkey] try type %s" % file_type)
-            payload = {
+        tasks = [HttpRequest.async_request(
+            'GET',
+            self.QQ_VKEY_API, {
                 "format": "json",
                 "inCharset": "utf8",
                 "outCharset": "utf-8",
@@ -196,11 +192,19 @@ class SearchEngineQq(SearchEngineBase):
                 "callback": "",
                 "uin": "0",
                 "songmid": mid,
-                "filename": file_names[file_type],
+                "filename": file_names[f['type']],
                 "guid": self.GUID
-            }
+            },
+            file_type=f['type']
+        ) for f in self.search_result['files']]
 
-            response_data = HttpRequest.request('GET', self.QQ_VKEY_API, payload=payload, is_json=True)
+        responses = await asyncio.gather(*tasks)
+
+        for response in responses:
+            response_data = json.loads(response[0])
+            file_type = response[1]['file_type']
+
+            self.log.debug("checking type %s" % file_type)
 
             if not response_data['code'] == 0:
                 self.log.debug("[QQ] [vkey] failed type %s, due to api return error" % file_type)
@@ -223,12 +227,13 @@ class SearchEngineQq(SearchEngineBase):
             self.log.debug("[QQ] [vkey] Failed in getting vkey by all types")
             return None, None
 
-        return vkey, file_names
+        self.vkey = vkey
+        self.file_names = file_names
 
-    def __format_download_links(self, vkey, file_names):
+    def __format_download_links(self):
 
         def __is_valid_download_link__(file):
-            if not vkey or not file_names:
+            if not self.vkey or not self.file_names:
                 return False
 
             file_type = file['type']
@@ -243,9 +248,9 @@ class SearchEngineQq(SearchEngineBase):
                     "[QQ] [link] Discard type: %s, not meeting minimal bitrate: %s" % (file_type, min_bitrate))
                 return False
 
-            file_name = file_names[file_type]
+            file_name = self.file_names[file_type]
             url = "http://dl.stream.qqmusic.qq.com/%s?guid=%s&vkey=%s&uin=0&fromtag=53" % (
-                file_name, self.GUID, vkey)
+                file_name, self.GUID, self.vkey)
 
             # TODO: qq api returns 403 with all HEAD method, need to find another method to validate
             # if not HttpRequest.validate_download_url(url):

@@ -16,7 +16,7 @@
         <tr>
             <td>{{file.ext}}</td>
             <td>{{file.bitrate_string}}</td>
-            <td><a href="{{file.url}}"><img src="{{url_for('static', filename='icon/icon_download.png')}}"></a></td>
+            <td><a href="{{file.url}}"><img src="static/icon/icon_download.png"></a></td>
         </tr>
         {% endfor %}
         {% else %}

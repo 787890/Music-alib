@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
+import json
 from hashlib import md5
 
 from src.engine.SearchEngineBase import SearchEngineBase
@@ -40,7 +42,7 @@ class SearchEngineKugou(SearchEngineBase):
     def get_search_result(self):
         return self.search_result
 
-    def search(self):
+    async def search(self):
         min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
         min_similarity = self.song_filter.min_similarity if self.song_filter else 0
         self.log.info(
@@ -48,7 +50,10 @@ class SearchEngineKugou(SearchEngineBase):
             (self.query_string, min_bitrate, min_similarity))
 
         # search for song info by query
-        self.__search_song_info_by_query()
+        file_hashes, file_bitrates = self.__search_song_info_by_query()
+
+        # get download link by hash and key
+        await self.__get_download_links(file_hashes, file_bitrates)
 
         self.log.debug(json_format(self.search_result))
 
@@ -67,7 +72,7 @@ class SearchEngineKugou(SearchEngineBase):
 
     def __search_song_info_by_query(self):
         if self.query_string == '':
-            return
+            return None, None
 
         self.log.debug("[KUGOU] [song_info] start searching for song info")
         payload = {'keyword': self.query_string}
@@ -75,7 +80,7 @@ class SearchEngineKugou(SearchEngineBase):
 
         if not response_data["error_code"] == 0:
             self.log.debug("[KUGOU] [song_info] search api return error")
-            return
+            return None, None
 
         min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
 
@@ -100,9 +105,12 @@ class SearchEngineKugou(SearchEngineBase):
                     self.log.debug(
                         "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
                         % min_similarity)
-                    return
+                    return None, None
 
             # file info
+            file_hashes = {}
+            file_bitrates = {}
+
             for file_type in self.FILE_TYPES:
                 size = song_info[self.FILE_SIZE_KEY_MAPPING[file_type]]
                 bitrate = song_info[self.FILE_BITRATE_KEY_MAPPING[file_type]]
@@ -118,75 +126,81 @@ class SearchEngineKugou(SearchEngineBase):
                     continue
 
                 # hash
-                hash_str = song_info[self.FILE_HASH_KEY_MAPPING[file_type]]
-
-                url, ext = self.__get_download_links(hash_str, file_type)
-
-                if not url or not ext:
-                    continue
-
-                if not HttpRequest.validate_download_url(url):
-                    self.log.debug("[KUGOU] [song_info] Discard file type: %s, due to invalid url" % file_type)
-                    continue
-
-                file = {
-                    'type': file_type,
-                    'url': url,
-                    'ext': ext,
-                    'size': size,
-                    'size_string': self._readable_filesize(size),
-                    'bitrate': bitrate,
-                    'bitrate_string': "%s Kbps" % bitrate
-                }
-                self.search_result['files'].append(file)
+                file_hashes[file_type] = str.lower(song_info[self.FILE_HASH_KEY_MAPPING[file_type]])
+                file_bitrates[file_type] = bitrate
 
         except KeyError:
             self.log.debug("[KUGOU] [song_info] Failed in finding song info, due to unexpected json key")
-            return
+            return None, None
 
-        if not self.search_result['files']:
-            self.log.debug("[KUGOU] [song_info] Failed in finding song info, due to empty result")
-            return
+        if file_hashes == {}:
+            self.log.debug("[KUGOU] [song_info] All files are discarded, nothing meets minimum bitrate")
+            return None, None
 
-    def __get_download_links(self, hash_str, file_type):
-        h_str = str.lower(hash_str)
-        key = self.__md5_kugouv2(h_str)
+        return file_hashes, file_bitrates
 
-        payload = {
-            "cmd": "23",
-            "pid": "1",
-            "behavior": "download",
-            "hash": h_str,
-            "key": key
-        }
+    async def __get_download_links(self, file_hashes, file_bitrates):
+        if not file_hashes:
+            return None
 
-        response_data = HttpRequest.request('GET', self.KUGOU_MUSIC_DOWNLOAD_API, payload)
+        # key is required for getting download link, key = md5(hash + 'kgcloudv2')
+        def __md5_kugouv2__(hash_string):
+            return md5((hash_string + 'kgcloudv2').encode('utf-8')).hexdigest()
 
-        try:
-            if not (("status" in response_data) and (response_data["status"] == 1 and response_data["url"])):
+        tasks = [HttpRequest.async_request(
+            'GET',
+            self.KUGOU_MUSIC_DOWNLOAD_API,
+            payload={
+                "cmd": "23",
+                "pid": "1",
+                "behavior": "download",
+                "hash": file_hash,
+                "key": __md5_kugouv2__(file_hash)
+                },
+            file_type=file_type
+        ) for file_type, file_hash in file_hashes.items()]
+
+        responses = await asyncio.gather(*tasks)
+
+        for response in responses:
+            response_data = json.loads(response[0])
+            file_type = response[1]['file_type']
+
+            try:
+                if not (("status" in response_data) and (response_data["status"] == 1 and response_data["url"])):
+                    self.log.debug("[KUGOU] [link] Failed in getting download link for type: %s" % file_type)
+                    return None, None
+
+                url = response_data['url']
+                ext = response_data['extName']
+                size = response_data['fileSize']
+                bitrate = file_bitrates[file_type]
+
+            except KeyError:
                 self.log.debug("[KUGOU] [link] Failed in getting download link for type: %s" % file_type)
                 return None, None
 
-            url = response_data['url']
-            ext = response_data['extName']
+            self.log.debug("[KUGOU] [link] Succeeded in getting download link for type: %s" % file_type)
 
-        except KeyError:
-            self.log.debug("[KUGOU] [link] Failed in getting download link for type: %s" % file_type)
-            return None, None
+            if not HttpRequest.validate_download_url(url):
+                self.log.debug("[KUGOU] [song_info] Discard file type: %s, due to invalid url" % file_type)
+                continue
 
-        self.log.debug("[KUGOU] [link] Succeeded in getting download link for type: %s" % file_type)
-
-        return url, ext
-
-    # key is required for getting download link, key = md5(hash + 'kgcloudv2')
-    @staticmethod
-    def __md5_kugouv2(hash_string):
-        return md5((hash_string + 'kgcloudv2').encode('utf-8')).hexdigest()
+            file = {
+                'type': file_type,
+                'url': url,
+                'ext': ext,
+                'size': size,
+                'size_string': self._readable_filesize(size),
+                'bitrate': bitrate,
+                'bitrate_string': "%d Kbps" % bitrate
+            }
+            self.search_result['files'].append(file)
 
 
 if __name__ == '__main__':
-    query = {"track_name": "打上花火", "artists": "米津玄師"}
-    fltr = SongFilter()
+    query = {"track_name": "Hello", "artists": "Adele"}
+    fltr = SongFilter(min_similarity=0, min_bitrate=0)
     s = SearchEngineKugou(query, fltr)
     s.search()
     r = s.get_search_result()
