@@ -5,6 +5,7 @@ import json
 
 from src.Filter import SongFilter
 from src.Logger import json_format
+from src.SongProperties import ComparableSimilarityRatio, ComparableBitrate
 from src.engine.SearchEngineBase import SearchEngineBase
 from src import HttpRequest
 from src.Enums import Source
@@ -159,7 +160,7 @@ class SearchEngineQq(SearchEngineBase):
 
             self.search_result['similarity_ratio'] = similarity_ratio
 
-            if similarity_ratio < min_similarity:
+            if ComparableSimilarityRatio(similarity_ratio) < ComparableSimilarityRatio(min_similarity):
                 self.log.debug(
                     "[QQ] [song_info] Discard all result, not meeting minimun similarity ratio: %s" % min_similarity)
                 return None
@@ -243,7 +244,7 @@ class SearchEngineQq(SearchEngineBase):
 
             min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
 
-            if file['bitrate'] < min_bitrate:
+            if ComparableBitrate(file['bitrate']) < ComparableBitrate(min_bitrate):
                 self.log.debug(
                     "[QQ] [link] Discard type: %s, not meeting minimal bitrate: %s" % (file_type, min_bitrate))
                 return False
@@ -265,8 +266,9 @@ class SearchEngineQq(SearchEngineBase):
 
 
 if __name__ == '__main__':
-    query = {"track_name": "Orion", "artists": "米津玄師"}
-    fltr = SongFilter(min_bitrate=0)
+    loop = asyncio.get_event_loop()
+    query = {"track_name": "Hello", "artists": "Adele"}
+    fltr = SongFilter(min_similarity=0.5, min_bitrate=320)
     s = SearchEngineQq(query, fltr)
-    s.search()
+    loop.run_until_complete(s.search())
     r = s.get_search_result()

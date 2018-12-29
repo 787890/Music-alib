@@ -4,6 +4,7 @@ import asyncio
 import json
 from hashlib import md5
 
+from src.SongProperties import ComparableBitrate, ComparableSimilarityRatio
 from src.engine.SearchEngineBase import SearchEngineBase
 from src import HttpRequest
 from src.Logger import json_format
@@ -101,7 +102,7 @@ class SearchEngineKugou(SearchEngineBase):
 
                 self.search_result['similarity_ratio'] = similarity_ratio
 
-                if similarity_ratio < min_similarity:
+                if ComparableSimilarityRatio(similarity_ratio) < ComparableSimilarityRatio(min_similarity):
                     self.log.debug(
                         "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
                         % min_similarity)
@@ -120,7 +121,7 @@ class SearchEngineKugou(SearchEngineBase):
                         "[KUGOU] [song_info] Discard file type: %s, due to invalid file size" % file_type)
                     continue
 
-                if bitrate < min_bitrate:
+                if ComparableBitrate(bitrate) < ComparableBitrate(min_bitrate):
                     self.log.debug(
                         "[KUGOU] [song_info] Discard file type: %s, not meeting minimum bitrate" % file_type)
                     continue
@@ -199,8 +200,9 @@ class SearchEngineKugou(SearchEngineBase):
 
 
 if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
     query = {"track_name": "Hello", "artists": "Adele"}
-    fltr = SongFilter(min_similarity=0, min_bitrate=0)
+    fltr = SongFilter(min_similarity=0, min_bitrate=400)
     s = SearchEngineKugou(query, fltr)
-    s.search()
+    loop.run_until_complete(s.search())
     r = s.get_search_result()

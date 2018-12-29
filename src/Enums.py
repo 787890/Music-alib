@@ -3,11 +3,6 @@
 from enum import Enum
 
 
-class QualityOrAccuracy(Enum):
-    quality_first = 'bitrate'
-    accuracy_first = 'similarity_ratio'
-
-
 class Source(Enum):
     QQ = 'qq'
     KUGOU = 'kugou'
@@ -49,3 +44,8 @@ class FormatPriority(Priority, Enum):
     flac = 9
     ape = 8
     wav = 7
+
+
+class QualityOrAccuracy(Enum):
+    quality_first = 'bitrate'
+    accuracy_first = 'similarity_ratio'
