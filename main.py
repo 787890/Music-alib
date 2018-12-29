@@ -8,11 +8,12 @@ import aiohttp_jinja2 as aiohttp_jinja2
 import jinja2
 from aiohttp import web
 
-from src.Enums import Source
+from src.Enums import Source, QualityOrAccuracy
 from src.Filter import SongFilter
 from src.engine.SearchEngineFactory import SearchEngineFactory
 from src import NeteaseMusicListParser
 from src import Logger
+from src.Recommender import Recommender
 
 app = web.Application()
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('./templates'))
@@ -22,7 +23,8 @@ log = Logger.get_logger()
 @aiohttp_jinja2.template('index.html')
 async def index(request):
     return {
-        'title': 'Search'
+        'title': 'Search',
+        'priorities': [k.name for k in QualityOrAccuracy]
     }
 
 
@@ -56,6 +58,7 @@ async def netease(request):
     list_id = data['netease']
     min_bitrate = int(data['min_bitrate'])
     min_similarity = float(data['min_similarity'])
+    priority = data['priority']
 
     search_queries = NeteaseMusicListParser.get_song_infos(list_id)
     total = search_queries.__len__()
@@ -78,7 +81,7 @@ async def netease(request):
         count_in_total += 1
 
         if count_in_page > page_limit or count_in_total > total:
-            search_results.append(await asyncio.gather(*tasks))
+            search_results = search_results + await asyncio.gather(*tasks)
             log.debug("[page (%d/%d)] end" % (page_count, total_page))
             await asyncio.sleep(1)
 
@@ -90,12 +93,25 @@ async def netease(request):
     results = []
 
     for search_result in search_results:
-        # TODO: implement recommender class
-        results.append(search_result[0])
+        file_infos = []
+        for source_search_result in search_result:
+            if not source_search_result['files']:
+                continue
+            for file_info in source_search_result['files']:
+                file_info['source'] = source_search_result['source']
+                file_info['track_name'] = source_search_result['track_name']
+                file_info['artists'] = source_search_result['artists']
+                file_info['similarity_ratio'] = source_search_result['similarity_ratio']
+                file_info['query'] = source_search_result['query']
+                file_infos.append(file_info)
+
+        log.debug(Logger.json_format(file_infos))
+        r = Recommender(quality_or_accuracy=QualityOrAccuracy.__getitem__(priority))
+        results.append(r.get_recommended(file_infos))
 
     return {
         'title': 'Search by NetEase',
-        'results': search_results
+        'results': results
     }
 
 

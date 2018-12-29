@@ -21,6 +21,10 @@
 	<input type="text" name="min_bitrate" value="320"><br><br>
 	<label>minimal similarity ratio:</label>
 	<input type="text" name="min_similarity" value="0.5"><br><br>
+	{% for priority in priorities %}
+	<input type="radio" name="priority" value="{{priority}}">{{priority}}
+	{% endfor %}
+	<br><br>
 	<input type="submit" value="Submit">
 </form>
 </body>
