@@ -8,7 +8,7 @@ from src.Logger import json_format
 from src.SongProperties import ComparableSimilarityRatio, ComparableBitrate
 from src.engine.SearchEngineBase import SearchEngineBase
 from src import HttpRequest
-from src.Enums import Source
+from src.Enums import SourceEnum
 
 
 class SearchEngineQq(SearchEngineBase):
@@ -17,7 +17,7 @@ class SearchEngineQq(SearchEngineBase):
     QQ_VKEY_API = 'https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg'
     GUID = '7332953645'
 
-    SOURCE_NAME = Source.QQ.value
+    SOURCE_NAME = SourceEnum.QQ.value
 
     FILE_TYPES = ['m4a', 'mp3_128', 'mp3_320', 'flac', 'ape']
 

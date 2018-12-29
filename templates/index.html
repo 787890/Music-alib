@@ -9,16 +9,20 @@
 <form action="/query" method="post">
 	<label>query:</label>
 	<input type="text" name="query"><br><br>
-	<label>minimal bitrate:</label>
-	<input type="text" name="min_bitrate" value="320"><br><br>
+	<label>quality:</label>
+	<input type="checkbox" onchange="" name="quality_query" value="lossless" />lossless
+	<input type="checkbox" onchange="" name="quality_query" value="compress" />compression
+	<br><br>
 	<input type="submit" value="Submit">
 </form>
 <h1>Search by NetEase Music list ID</h1><br>
 <form action="/netease" method="post">
 	<label>id:</label>
 	<input type="text" name="netease"><br><br>
-	<label>minimal bitrate:</label>
-	<input type="text" name="min_bitrate" value="320"><br><br>
+	<label>quality:</label>
+	<input type="checkbox" onchange="" name="quality_netease" value="lossless" />lossless
+	<input type="checkbox" onchange="" name="quality_netease" value="compress" />compression
+	<br><br>
 	<label>minimal similarity ratio:</label>
 	<input type="text" name="min_similarity" value="0.5"><br><br>
 	{% for priority in priorities %}

@@ -8,7 +8,7 @@ from src.SongProperties import ComparableBitrate, ComparableSimilarityRatio
 from src.engine.SearchEngineBase import SearchEngineBase
 from src import HttpRequest
 from src.Logger import json_format
-from src.Enums import Source
+from src.Enums import SourceEnum
 from src.Filter import SongFilter
 
 
@@ -17,7 +17,7 @@ class SearchEngineKugou(SearchEngineBase):
     KUGOU_MUSIC_SEARCH_API = "http://songsearch.kugou.com/song_search_v2"
     KUGOU_MUSIC_DOWNLOAD_API = "http://trackercdnbj.kugou.com/i/v2/"
 
-    SOURCE_NAME = Source.KUGOU.value
+    SOURCE_NAME = SourceEnum.KUGOU.value
 
     FILE_TYPES = ['compressed', 'lossless']
 

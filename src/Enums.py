@@ -3,7 +3,7 @@
 from enum import Enum
 
 
-class Source(Enum):
+class SourceEnum(Enum):
     QQ = 'qq'
     KUGOU = 'kugou'
 
@@ -21,6 +21,11 @@ class FormatEnum(Enum):
             return True
         else:
             return False
+
+
+class QualityToBitrateEnums(Enum):
+    lossless = (350, 9999)
+    compress = (0, 350)
 
 
 class Priority(Enum):

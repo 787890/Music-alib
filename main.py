@@ -8,7 +8,7 @@ import aiohttp_jinja2 as aiohttp_jinja2
 import jinja2
 from aiohttp import web
 
-from src.Enums import Source, QualityOrAccuracy
+from src.Enums import SourceEnum, QualityOrAccuracy
 from src.Filter import SongFilter
 from src.engine.SearchEngineFactory import SearchEngineFactory
 from src import NeteaseMusicListParser
@@ -33,8 +33,10 @@ async def query(request):
     data = await request.post()
     q = data['query']
     min_bitrate = int(data['min_bitrate'])
+    max_bitrate = int(data['max_bitrate'])
 
-    results = await __search(q, min_bitrate=min_bitrate)
+    fltr = SongFilter(min_bitrate=min_bitrate, max_bitrate=max_bitrate)
+    results = await __search(q, fltr)
 
     return {
         'title': 'Search by query',
@@ -42,9 +44,8 @@ async def query(request):
     }
 
 
-async def __search(q, min_bitrate=None, min_similarity=None):
-    fltr = SongFilter(min_bitrate=min_bitrate, min_similarity=min_similarity)
-    engines = [SearchEngineFactory.get_search_engine(s)(q, song_filter=fltr) for s in Source]
+async def __search(q, fltr):
+    engines = [SearchEngineFactory.get_search_engine(s)(q, song_filter=fltr) for s in SourceEnum]
 
     tasks = [e.search() for e in engines]
     await asyncio.gather(*tasks)
@@ -57,9 +58,11 @@ async def netease(request):
     data = await request.post()
     list_id = data['netease']
     min_bitrate = int(data['min_bitrate'])
+    max_bitrate = int(data['max_bitrate'])
     min_similarity = float(data['min_similarity'])
     priority = data['priority']
 
+    fltr = SongFilter(min_bitrate=min_bitrate, max_bitrate=max_bitrate, min_similarity=min_similarity)
     search_queries = NeteaseMusicListParser.get_song_infos(list_id)
     total = search_queries.__len__()
     page_limit = 20
@@ -73,7 +76,7 @@ async def netease(request):
     for q in search_queries:
         log.debug("[page (%d/%d)] coroutine %d start" % (page_count, total_page, count_in_page))
 
-        tasks.append(__search(q, min_bitrate=min_bitrate, min_similarity=min_similarity))
+        tasks.append(__search(q, fltr))
         # rand = random.random()*3
         # tasks.append(__mock_search("[(%d/%d)] query: %s, time: %f" % (count_in_total, total, q, rand), rand))
 
