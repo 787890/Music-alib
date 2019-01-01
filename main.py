@@ -98,7 +98,9 @@ async def netease(request):
 
     for search_result in search_results:
         file_infos = []
+        q = ''
         for source_search_result in search_result:
+            q = source_search_result['query']
             if not source_search_result['files']:
                 continue
             for file_info in source_search_result['files']:
@@ -108,6 +110,9 @@ async def netease(request):
                 file_info['similarity_ratio'] = source_search_result['similarity_ratio']
                 file_info['query'] = source_search_result['query']
                 file_infos.append(file_info)
+        if not file_infos:
+            results.append({'query': q})
+            continue
 
         log.debug(Logger.json_format(file_infos))
         r = Recommender(quality_or_accuracy=QualityOrAccuracy.__getitem__(priority))

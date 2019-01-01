@@ -10,8 +10,8 @@
     <p></p>
         <tbody>
         <tr>
-        {% if result %}
-            <td>{{result.query}}</td>
+        <td>{{result.query}}</td>
+        {% if result.track_name %}
             <td>{{result.track_name}} - {{result.artists}}</td>
             <td>{{result.ext}}</td>
             <td>{{result.bitrate_string}}</td>

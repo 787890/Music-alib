@@ -3,9 +3,6 @@
 import asyncio
 import json
 
-from urllib import request
-from urllib.error import HTTPError
-
 from src.Filter import SongFilter
 from src.Logger import json_format
 from src.engine.SearchEngineBase import SearchEngineBase
@@ -269,7 +266,7 @@ class SearchEngineQq(SearchEngineBase):
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     query = {"track_name": "Hello", "artists": "Adele"}
-    fltr = SongFilter(min_similarity=0, qualities=None)
+    fltr = SongFilter(min_similarity=0.5, qualities=[QualityToBitrateEnums.lossless])
     s = SearchEngineQq(query, fltr)
     loop.run_until_complete(s.search())
     r = s.get_search_result()
