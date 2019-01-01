@@ -17,6 +17,5 @@ class SearchEngineFactory:
         elif source == SourceEnum.KUGOU:
             return SearchEngineKugou
         else:
-            # TODO: add log
             log.error("Invalid search engine. available search engines: %s" %
                       [s.name for s in SourceEnum])

@@ -9,8 +9,8 @@
     {% for result in results %}
     <p></p>
         <tbody>
-        {% if result %}
         <tr>
+        {% if result %}
             <td>{{result.query}}</td>
             <td>{{result.track_name}} - {{result.artists}}</td>
             <td>{{result.ext}}</td>
@@ -18,10 +18,10 @@
             <td>{{result.source}}</td>
             <td>{{result.similarity_ratio}}</td>
             <td><a href="{{result.url}}"><img src="static/icon/icon_download.png"></a></td>
-        </tr>
         {% else %}
-        <p>Winner Winner Chicken Dinner!</p>
+            <td>Winner Winner Chicken Dinner!</td>
         {% endif %}
+        </tr>
         </tbody>
     {% endfor %}
     </table>

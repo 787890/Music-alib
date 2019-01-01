@@ -10,8 +10,9 @@
 	<label>query:</label>
 	<input type="text" name="query"><br><br>
 	<label>quality:</label>
-	<input type="checkbox" onchange="" name="quality_query" value="lossless" />lossless
-	<input type="checkbox" onchange="" name="quality_query" value="compress" />compression
+	{% for quality in qualities %}
+	<input type="checkbox" onchange="" name="quality_query" value="{{quality}}" />{{quality}}
+	{% endfor %}
 	<br><br>
 	<input type="submit" value="Submit">
 </form>
@@ -20,8 +21,9 @@
 	<label>id:</label>
 	<input type="text" name="netease"><br><br>
 	<label>quality:</label>
-	<input type="checkbox" onchange="" name="quality_netease" value="lossless" />lossless
-	<input type="checkbox" onchange="" name="quality_netease" value="compress" />compression
+	{% for quality in qualities %}
+	<input type="checkbox" onchange="" name="quality_netease" value="{{quality}}" />{{quality}}
+	{% endfor %}
 	<br><br>
 	<label>minimal similarity ratio:</label>
 	<input type="text" name="min_similarity" value="0.5"><br><br>

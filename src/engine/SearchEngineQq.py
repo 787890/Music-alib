@@ -3,12 +3,14 @@
 import asyncio
 import json
 
+from urllib import request
+from urllib.error import HTTPError
+
 from src.Filter import SongFilter
 from src.Logger import json_format
-from src.SongProperties import ComparableSimilarityRatio, ComparableBitrate
 from src.engine.SearchEngineBase import SearchEngineBase
 from src import HttpRequest
-from src.Enums import SourceEnum
+from src.Enums import SourceEnum, QualityToBitrateEnums
 
 
 class SearchEngineQq(SearchEngineBase):
@@ -56,11 +58,11 @@ class SearchEngineQq(SearchEngineBase):
         return self.search_result
 
     async def search(self):
-        min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
-        min_similarity = self.song_filter.min_similarity if self.song_filter else 0
+        bitrate_range = self.song_filter.qualities
+        min_similarity = self.song_filter.min_similarity
         self.log.info(
-            "Start searching. source: QQ, query: %s (bitrate >= %s, similarity ratio >= %s)" %
-            (self.query_string, min_bitrate, min_similarity))
+            "search source: QQ, search query: %s (bitrate in %s, similarity ratio >= %s)" %
+            (self.query_string, bitrate_range, min_similarity))
 
         # search for song info by query
         mid = self.__search_song_info_by_query()
@@ -76,14 +78,13 @@ class SearchEngineQq(SearchEngineBase):
         if not self.search_result['files']:
             self.log.info(
                 "Failed in finding download info from search source: QQ, "
-                "search query: %s (bitrate >= %s, similarity ratio >= %s)" %
-                (self.query_string, min_bitrate, min_similarity))
-            return
-
-        self.log.info(
-            "Succeeded in finding download info from search source: QQ, "
-            "search query: %s (bitrate >= %s, similarity ratio >= %s)" %
-            (self.query_string, min_bitrate, min_similarity))
+                "search query: %s (bitrate in %s, similarity ratio >= %s)" %
+                (self.query_string, bitrate_range, min_similarity))
+        else:
+            self.log.info(
+                "Succeeded in finding download info from search source: QQ, "
+                "search query: %s (bitrate in %s, similarity ratio >= %s)" %
+                (self.query_string, bitrate_range, min_similarity))
 
     def __search_song_info_by_query(self):
         if self.query_string == '':
@@ -156,11 +157,11 @@ class SearchEngineQq(SearchEngineBase):
 
         if isinstance(self.query, dict):
             similarity_ratio = self._get_similarity_ratio()
-            min_similarity = self.song_filter.min_similarity if self.song_filter else 0
+            min_similarity = self.song_filter.min_similarity
 
             self.search_result['similarity_ratio'] = similarity_ratio
 
-            if ComparableSimilarityRatio(similarity_ratio) < ComparableSimilarityRatio(min_similarity):
+            if not self.song_filter.is_meet_similarity(similarity_ratio):
                 self.log.debug(
                     "[QQ] [song_info] Discard all result, not meeting minimun similarity ratio: %s" % min_similarity)
                 return None
@@ -242,11 +243,11 @@ class SearchEngineQq(SearchEngineBase):
                 self.log.debug("[QQ] [link] Discard type: %s, due to invalid file size: %s" % (file_type, file['size']))
                 return False
 
-            min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
+            bitrate_range = self.song_filter.qualities
 
-            if ComparableBitrate(file['bitrate']) < ComparableBitrate(min_bitrate):
+            if not self.song_filter.is_meet_bitrate(file['bitrate']):
                 self.log.debug(
-                    "[QQ] [link] Discard type: %s, not meeting minimal bitrate: %s" % (file_type, min_bitrate))
+                    "[QQ] [link] Discard type: %s, not meeting bitrate range: %s" % (file_type, bitrate_range))
                 return False
 
             file_name = self.file_names[file_type]
@@ -254,9 +255,9 @@ class SearchEngineQq(SearchEngineBase):
                 file_name, self.GUID, self.vkey)
 
             # TODO: qq api returns 403 with all HEAD method, need to find another method to validate
-            # if not HttpRequest.validate_download_url(url):
-            #     self.log.debug("[QQ] [link] Failed in verify download link %s" % file_type)
-            #     return False
+            if not HttpRequest.validate_download_url(url):
+                self.log.debug("[QQ] [link] Failed in verify download link %s" % file_type)
+                return False
 
             file['url'] = url
             self.log.debug("[QQ] [link] Succeeded in verify download link %s" % file_type)
@@ -268,7 +269,7 @@ class SearchEngineQq(SearchEngineBase):
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     query = {"track_name": "Hello", "artists": "Adele"}
-    fltr = SongFilter(min_similarity=0.5, min_bitrate=320)
+    fltr = SongFilter(min_similarity=0, qualities=None)
     s = SearchEngineQq(query, fltr)
     loop.run_until_complete(s.search())
     r = s.get_search_result()

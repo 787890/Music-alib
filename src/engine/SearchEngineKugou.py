@@ -4,11 +4,10 @@ import asyncio
 import json
 from hashlib import md5
 
-from src.SongProperties import ComparableBitrate, ComparableSimilarityRatio
 from src.engine.SearchEngineBase import SearchEngineBase
 from src import HttpRequest
 from src.Logger import json_format
-from src.Enums import SourceEnum
+from src.Enums import SourceEnum, QualityToBitrateEnums
 from src.Filter import SongFilter
 
 
@@ -44,11 +43,11 @@ class SearchEngineKugou(SearchEngineBase):
         return self.search_result
 
     async def search(self):
-        min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
-        min_similarity = self.song_filter.min_similarity if self.song_filter else 0
+        bitrate_range = self.song_filter.qualities
+        min_similarity = self.song_filter.min_similarity
         self.log.info(
-            "search source: KUGOU, search query: %s (bitrate >= %s, similarity ratio >= %s)" %
-            (self.query_string, min_bitrate, min_similarity))
+            "search source: KUGOU, search query: %s (bitrate in %s, similarity ratio >= %s)" %
+            (self.query_string, bitrate_range, min_similarity))
 
         # search for song info by query
         file_hashes, file_bitrates = self.__search_song_info_by_query()
@@ -61,15 +60,13 @@ class SearchEngineKugou(SearchEngineBase):
         if not self.search_result['files']:
             self.log.info(
                 "Failed in getting download info from search source: Kugou, "
-                "search query: %s (bitrate >= %s, similarity ratio >= %s)" %
-                (self.query_string, min_bitrate, min_similarity))
-
-        self.log.info(
-            "Succeeded in finding download info from search source: Kugou, "
-            "search query: %s (bitrate >= %s, similarity ratio >= %s)" %
-            (self.query_string, min_bitrate, min_similarity))
-
-        self.log.debug(json_format(self.search_result))
+                "search query: %s (bitrate in %s, similarity ratio >= %s)" %
+                (self.query_string, bitrate_range, min_similarity))
+        else:
+            self.log.info(
+                "Succeeded in finding download info from search source: Kugou, "
+                "search query: %s (bitrate in %s, similarity ratio >= %s)" %
+                (self.query_string, bitrate_range, min_similarity))
 
     def __search_song_info_by_query(self):
         if self.query_string == '':
@@ -82,8 +79,6 @@ class SearchEngineKugou(SearchEngineBase):
         if not response_data["error_code"] == 0:
             self.log.debug("[KUGOU] [song_info] search api return error")
             return None, None
-
-        min_bitrate = self.song_filter.min_bitrate if self.song_filter else 0
 
         try:
             song_info = response_data["data"]["lists"][0]
@@ -102,7 +97,7 @@ class SearchEngineKugou(SearchEngineBase):
 
                 self.search_result['similarity_ratio'] = similarity_ratio
 
-                if ComparableSimilarityRatio(similarity_ratio) < ComparableSimilarityRatio(min_similarity):
+                if not self.song_filter.is_meet_similarity(similarity_ratio):
                     self.log.debug(
                         "[KUGOU] [song_info] All files are discarded, not meeting minimum similarity: %s"
                         % min_similarity)
@@ -121,9 +116,9 @@ class SearchEngineKugou(SearchEngineBase):
                         "[KUGOU] [song_info] Discard file type: %s, due to invalid file size" % file_type)
                     continue
 
-                if ComparableBitrate(bitrate) < ComparableBitrate(min_bitrate):
+                if not self.song_filter.is_meet_bitrate(bitrate):
                     self.log.debug(
-                        "[KUGOU] [song_info] Discard file type: %s, not meeting minimum bitrate" % file_type)
+                        "[KUGOU] [song_info] Discard file type: %s, not meeting bitrate range" % file_type)
                     continue
 
                 # hash
@@ -201,8 +196,8 @@ class SearchEngineKugou(SearchEngineBase):
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    query = {"track_name": "Hello", "artists": "Adele"}
-    fltr = SongFilter(min_similarity=0, min_bitrate=400)
+    query = {"track_name": "Hello", "artists": ""}
+    fltr = SongFilter(min_similarity=0, qualities=[QualityToBitrateEnums.compress])
     s = SearchEngineKugou(query, fltr)
     loop.run_until_complete(s.search())
     r = s.get_search_result()

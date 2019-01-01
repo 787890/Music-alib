@@ -16,6 +16,8 @@ class Recommender:
         self.first_priority_key = quality_or_accuracy
 
     def get_recommended(self, file_list):
+        if not file_list:
+            return []
         comparable_class = ComparableFactory.get_comparable_class(self.first_priority_key)
         return sorted(file_list,
                       key=lambda k: (comparable_class(k[self.first_priority_key.value]),

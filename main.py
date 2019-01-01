@@ -8,7 +8,7 @@ import aiohttp_jinja2 as aiohttp_jinja2
 import jinja2
 from aiohttp import web
 
-from src.Enums import SourceEnum, QualityOrAccuracy
+from src.Enums import SourceEnum, QualityOrAccuracy, QualityToBitrateEnums
 from src.Filter import SongFilter
 from src.engine.SearchEngineFactory import SearchEngineFactory
 from src import NeteaseMusicListParser
@@ -24,7 +24,8 @@ log = Logger.get_logger()
 async def index(request):
     return {
         'title': 'Search',
-        'priorities': [k.name for k in QualityOrAccuracy]
+        'priorities': [k.name for k in QualityOrAccuracy],
+        'qualities': [k.name for k in QualityToBitrateEnums]
     }
 
 
@@ -32,10 +33,9 @@ async def index(request):
 async def query(request):
     data = await request.post()
     q = data['query']
-    min_bitrate = int(data['min_bitrate'])
-    max_bitrate = int(data['max_bitrate'])
+    quality_query = data.getall('quality_query')
 
-    fltr = SongFilter(min_bitrate=min_bitrate, max_bitrate=max_bitrate)
+    fltr = SongFilter(qualities=[QualityToBitrateEnums.__getitem__(q) for q in quality_query])
     results = await __search(q, fltr)
 
     return {
@@ -57,12 +57,13 @@ async def __search(q, fltr):
 async def netease(request):
     data = await request.post()
     list_id = data['netease']
-    min_bitrate = int(data['min_bitrate'])
-    max_bitrate = int(data['max_bitrate'])
+    quality_netease = data.getall('quality_netease')
     min_similarity = float(data['min_similarity'])
     priority = data['priority']
 
-    fltr = SongFilter(min_bitrate=min_bitrate, max_bitrate=max_bitrate, min_similarity=min_similarity)
+    fltr = SongFilter(
+        qualities=[QualityToBitrateEnums.__getitem__(q) for q in quality_netease],
+        min_similarity=min_similarity)
     search_queries = NeteaseMusicListParser.get_song_infos(list_id)
     total = search_queries.__len__()
     page_limit = 20

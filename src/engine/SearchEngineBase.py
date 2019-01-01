@@ -3,11 +3,12 @@
 from difflib import SequenceMatcher
 
 from src import Logger
+from src.Filter import SongFilter
 
 
 class SearchEngineBase:
 
-    def __init__(self, query, song_filter=None):
+    def __init__(self, query, song_filter=SongFilter()):
         self.query = query
         self.query_string = "%s %s" % (
             query['track_name'], query['artists']) if isinstance(query, dict) else str.strip(query)

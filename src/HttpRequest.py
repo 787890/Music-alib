@@ -4,7 +4,9 @@ import aiohttp
 import json
 from json import JSONDecodeError
 
-import requests
+# import requests
+from urllib import request as urllib_req
+from urllib.error import HTTPError
 # from requests.adapters import HTTPAdapter
 # from requests.exceptions import RetryError
 from urllib3.exceptions import MaxRetryError
@@ -120,11 +122,16 @@ def request(method, url, payload=None, retries=5, backoff_factor=0.3,
 
 
 def validate_download_url(url):
-    response = requests.head(url, allow_redirects=True)
-    content_type = response.headers.get('content-type', 0)
-    if 'text' in content_type.lower():
-        return False
-    if 'html' in content_type.lower():
+    # response = requests.head(url, allow_redirects=True)
+    # content_type = response.headers.get('content-type', 0)
+    # if 'text' in content_type.lower():
+    #     return False
+    # if 'html' in content_type.lower():
+    #     return False
+    # return True
+    try:
+        urllib_req.urlopen(url)
+    except HTTPError:
         return False
     return True
 
