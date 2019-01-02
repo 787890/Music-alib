@@ -37,7 +37,9 @@ if __name__ == '__main__':
             "bitrate_string": "800 Kbps",
             "similarity_ratio": 0.65,
             'source': 'kugou',
-            "url": "http://dl.stream.qqmusic.qq.com/M800002Il7Ya1tZ6UZ.mp3?guid=7332953645&vkey=F6D16EEBE31F4622F6F2B496BA0CA1CCCC9D20E25C045103096E84E707B81DC1F3382EB1C44B27978C2C05E5862CB18C8A3B723F0B59DC68&uin=0&fromtag=53"
+            "url": "http://dl.stream.qqmusic.qq.com/M800002Il7Ya1tZ6UZ.mp3?"
+                   "guid=7332953645&vkey=F6D16EEBE31F4622F6F2B496BA0CA1CCCC9D20E25C045103096E84E707B81D"
+                   "C1F3382EB1C44B27978C2C05E5862CB18C8A3B723F0B59DC68&uin=0&fromtag=53"
         },
         {
             "type": "flac",
@@ -48,7 +50,9 @@ if __name__ == '__main__':
             "bitrate_string": "793 Kbps",
             "similarity_ratio": 0.6,
             'source': 'kugou',
-            "url": "http://dl.stream.qqmusic.qq.com/F000002Il7Ya1tZ6UZ.flac?guid=7332953645&vkey=F6D16EEBE31F4622F6F2B496BA0CA1CCCC9D20E25C045103096E84E707B81DC1F3382EB1C44B27978C2C05E5862CB18C8A3B723F0B59DC68&uin=0&fromtag=53"
+            "url": "http://dl.stream.qqmusic.qq.com/F000002Il7Ya1tZ6UZ.flac?"
+                   "guid=7332953645&vkey=F6D16EEBE31F4622F6F2B496BA0CA1CCCC9D20E25C045103096E84E707B81D"
+                   "C1F3382EB1C44B27978C2C05E5862CB18C8A3B723F0B59DC68&uin=0&fromtag=53"
         }
     ]
     res = r.get_recommended(l)
